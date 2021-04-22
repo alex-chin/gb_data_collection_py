@@ -11,19 +11,30 @@ https://5ka.ru/special_offers/
 
 
 class Parse5ka:
-    fake_url = "http://monolith/"
-    norm_url = "https://5ka.ru/"
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:88.0) Gecko/20100101 Firefox/88.0"
     }
     params = {
+        # максимальное значение
         "records_per_page": 20,
+        # выход по тайм-ауту из GET
+        # "timeout": 5,
     }
 
     def __init__(self, star_url: str, save_path: Path):
         self.star_url = star_url
         self.save_path = save_path
+
+    def _get_response2(self, url, *args, **kwargs):
+        while True:
+            # контроль по тайм-ауту
+            try:
+                response = requests.get(url, *args, **kwargs)
+                if response.status_code == 200:
+                    return response
+                time.sleep(3)
+            finally:
+                pass
 
     def _get_response(self, url, *args, **kwargs):
         while True:
@@ -38,18 +49,19 @@ class Parse5ka:
             self._save(product, file_path)
 
     def _parse(self, url: str):
+        count = 0
         while url:
-            urln = self._clear_url(url)
-            print(urln)
             time.sleep(0.1)
-            response = self._get_response(urln, headers=self.headers, params=self.params)
+            response = self._get_response(url, headers=self.headers, params=self.params)
             data = response.json()
             url = data["next"]
             for product in data["results"]:
                 yield product
-
-    def _clear_url(self,url):
-        return url.replace(self.fake_url, self.norm_url)
+            count += 1
+            print(count,"->")
+            if count > 5:
+                break
+                pass
 
     def _save(self, data: dict, file_path):
         file_path.write_text(json.dumps(data, ensure_ascii=False))
