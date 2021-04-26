@@ -25,7 +25,11 @@ https://5ka.ru/special_offers/
 
 
 class ParseCat5ka(p5ka.Parse5ka):
-    def run(self):
+    def __init__(self, url_cat, url_prod, save_path: Path):
+        self.url_cat = url_cat
+        super().__init__(url_prod, save_path)
+
+    def run_deep(self):
         # список каталогов
         response = self._get_response(self.star_url, headers=self.headers)
         parent_cats = response.json()
@@ -35,9 +39,19 @@ class ParseCat5ka(p5ka.Parse5ka):
             response = self._get_response(url, headers=self.headers)
             categories = response.json()
             for cat in categories:
-                self.params['categories']=cat['group_code']
+                self.params['categories'] = cat['group_code']
                 for group in self._parse('https://5ka.ru/api/v2/special_offers/'):
                     print(group)
+
+    def run(self):
+        # список каталогов
+        response = self._get_response(self.url_cat, headers=self.headers)
+        parent_cats = response.json()
+        for parcat in parent_cats:
+            self.params['categories'] = parcat['parent_group_code']
+            print(parcat['parent_group_code'], parcat['parent_group_name'])
+            for product in self._parse(self.star_url):
+                print(product)
 
     def _parse(self, url: str):
         while url:
@@ -54,6 +68,7 @@ class ParseCat5ka(p5ka.Parse5ka):
 
 if __name__ == "__main__":
     save_path = p5ka.get_save_path("products")
-    url = "https://5ka.ru/api/v2/categories/"
-    parser = ParseCat5ka(url, save_path)
+    url_cat = "https://5ka.ru/api/v2/categories/"
+    url_prod = "https://5ka.ru/api/v2/special_offers/"
+    parser = ParseCat5ka(url_cat, url_prod, save_path)
     parser.run()
