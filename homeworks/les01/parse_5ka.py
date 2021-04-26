@@ -39,9 +39,7 @@ class Parse5ka:
 
     def _parse(self, url: str):
         while url:
-            urln =''
             urln = self._clear_url(url)
-            print(urln)
             time.sleep(0.1)
             response = self._get_response(urln, headers=self.headers, params=self.params)
             data = response.json()
