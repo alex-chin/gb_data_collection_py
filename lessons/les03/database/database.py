@@ -13,3 +13,4 @@ class Database:
 
     def add_post(self,data):
         session = self.maker()
+        print(1)
